@@ -1,0 +1,14 @@
+[Unit]
+Description=Relay Suricata Alerts to Tines Webhook
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/relay_alerts/relay_alerts.py
+WorkingDirectory=/opt/relay_alerts
+Restart=on-failure
+User=suricata  # Replace 'suricata' with the appropriate user
+Group=suricata  # Replace 'suricata' with the appropriate group
+
+[Install]
+WantedBy=multi-user.target
