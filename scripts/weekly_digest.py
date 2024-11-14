@@ -18,9 +18,18 @@ def read_eve_json():
 
 
 def filter_weekly_alerts(events):
-    """Filters alerts from the past week."""
+    """Filters alerts from the past week using timezone-aware datetime."""
     one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
-    return [event for event in events if datetime.fromisoformat(event["timestamp"][:-1]) >= one_week_ago]
+
+    def parse_timestamp(timestamp):
+        # Handle timestamps with 'Z' or missing timezone info by normalizing to UTC
+        if timestamp.endswith("Z"):
+            timestamp = timestamp.replace("Z", "+00:00")
+        elif timestamp.endswith("+000"):
+            timestamp += "0"  # Fix incomplete timezone notation
+        return datetime.fromisoformat(timestamp)
+
+    return [event for event in events if parse_timestamp(event["timestamp"]) >= one_week_ago]
 
 
 def generate_summary(weekly_alerts):
