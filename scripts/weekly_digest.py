@@ -1,7 +1,7 @@
 import json
 import requests
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 # Path to Suricata's eve.json file
 EVE_JSON_PATH = "/var/log/suricata/eve.json"
@@ -19,7 +19,7 @@ def read_eve_json():
 
 def filter_weekly_alerts(events):
     """Filters alerts from the past week."""
-    one_week_ago = datetime.utcnow() - timedelta(days=7)
+    one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
     return [event for event in events if datetime.fromisoformat(event["timestamp"][:-1]) >= one_week_ago]
 
 
