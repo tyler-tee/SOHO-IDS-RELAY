@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 EVE_JSON_PATH = "/var/log/suricata/eve.json"
 
 # Webhook URL for sending the weekly digest
-WEBHOOK_URL = "https://your-external-webhook-url.com/endpoint"
+WEBHOOK_URL = "https://your-tines-tenant.tines.com/path/secret"
 
 
 def read_eve_json():
