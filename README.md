@@ -24,6 +24,10 @@ This project is designed to relay Suricata alerts, captured in `eve.json`, to an
 - Python 3.x for running scripts.
 - An endpoint to receive and process alerts.
 
+## Tines Story
+
+![Suricata Notification Relay-storyboard](https://github.com/user-attachments/assets/76a18791-6ba3-4e69-9ffd-c2f05272dab5)
+
 ## Example Alerts
 *In each of the below examples, the raw alert is included in the primary message's 🧵*
   
