@@ -1,4 +1,4 @@
-# SOHO IDS
+# SOHO IDS Relay
 
 A small office/home office (SOHO) Intrusion Detection System (IDS) project that leverages Suricata to detect potential network threats and uses an LLM to process and analyze alerts via webhook integration.
 
@@ -16,6 +16,7 @@ This project is designed to relay Suricata alerts, captured in `eve.json`, to an
 
 - `prompts/`: Contains prompt templates for LLM alert processing.
 - `scripts/`: Includes scripts for parsing `eve.json` and sending data to the webhook.
+- `tines/`: Ready-to-import Tines story with multiple LLM examples.
 
 ## Requirements
 
