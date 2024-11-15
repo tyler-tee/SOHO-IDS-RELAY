@@ -1,0 +1,1812 @@
+{
+  "schema_version": 23,
+  "standard_lib_version": 63,
+  "action_runtime_version": 15,
+  "name": "Suricata Notification Relay",
+  "description": null,
+  "guid": "3bc1918fa393bb2bcb31a6ecee307bcf",
+  "slug": "suricata_notification_relay",
+  "agents": [
+    {
+      "type": "Agents::WebhookAgent",
+      "name": "Receive Suricata Alerts",
+      "disabled": false,
+      "description": null,
+      "guid": "90f9636217c517687e6b3ec39c4e3550",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:3bc1918fa393bb2bcb31a6ecee307bcf",
+      "options": {
+        "path": "661200103becbf1f82f04135ab32da83",
+        "secret": "e8f264b02f92851e4a25e21c38f9a4a7",
+        "verbs": "get,post"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Analyze Alerts",
+      "disabled": true,
+      "description": "Creates a model response for the given chat conversation.\n\nLink to documentation:\nhttps://platform.openai.com/docs/api-reference/chat/create",
+      "guid": "cde8851a3537e10c7195b0ccf0dd68ae",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:200521dbe4e6126d515dcb06d4bcb051",
+      "options": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "content_type": "application_json",
+        "method": "post",
+        "headers": {
+          "Authorization": "Bearer <<INPUT.openai_credential>>"
+        },
+        "payload": "=LOCAL.final_payload",
+        "local": {
+          "optional_parameters": {
+            "messages": "=INPUT.messages",
+            "model": "=INPUT.model",
+            "frequency_penalty": "=INPUT.frequency_penalty",
+            "logit_bias": "=INPUT.logit_bias",
+            "logprobs": "=INPUT.logprobs",
+            "top_logprobs": "=INPUT.top_logprobs",
+            "max_completion_tokens": "=INPUT.max_completion_tokens",
+            "n": "=INPUT.n",
+            "presence_penalty": "=INPUT.presence_penalty",
+            "response_format": "=INPUT.response_format",
+            "seed": "=INPUT.seed",
+            "service_tier": "=FORCE_ARRAY(INPUT.service_tier)[0]",
+            "stop": "=INPUT.stop",
+            "stream": "=INPUT.stream",
+            "stream_options": "=INPUT.stream_options",
+            "temperature": "=INPUT.temperature",
+            "top_p": "=INPUT.top_p",
+            "tools": "=INPUT.tools",
+            "tool_choice": "=INPUT.tool_choice",
+            "parallel_tool_calls": "=INPUT.parallel_tool_calls",
+            "user": "=INPUT.user"
+          },
+          "final_payload": "=REJECT(\n  LOCAL.optional_parameters,\n  LAMBDA(\n    item,\n    OR(\n      item = NULL,\n      IF(\n        OR(\n          TYPE(item) = \"TrueClass\",\n          TYPE(item) = \"FalseClass\",\n          TYPE(item) = \"Integer\"\n        ),\n        IS_EMPTY(TEXT(item)),\n        IS_EMPTY(item)\n      )\n    )\n  )\n)"
+        },
+        "timeout": "180"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "8fa1da5ac491fd18ab6fd7bba288e904ef98a65e5a163ba8634024376263f755",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Send Slack DM",
+      "disabled": false,
+      "description": "Sends a message to a public channel, private channel, or direct message/IM channel that has rich, interactive elements that you can design in Slack's Block Kit Builder. \n\nLink to documentation: https://api.slack.com/methods/chat.postMessage\nLink to Block Kit Builder Overview: https://api.slack.com/block-kit\nLink to Block Kit Builder: https://api.slack.com/tools/block-kit-builder \n\nRequired scope: chat:write",
+      "guid": "9c1dcb23ec5c6585e2d6ea412915d9fb",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:9f14dfcd7d12904a7c5651dbe89b3389",
+      "options": {
+        "url": "https://slack.com/api/chat.postMessage",
+        "content_type": "json; charset=utf-8",
+        "method": "post",
+        "payload": "=LOCAL.final_payload",
+        "headers": {
+          "Authorization": "Bearer <<INPUT.slack_credential>>"
+        },
+        "local": {
+          "all_options": {
+            "channel": "<<INPUT.channel_user_id>>",
+            "blocks": "=DEFAULT(INPUT.message.blocks, INPUT.message)",
+            "icon_emoji": "<<INPUT.icon_emoji>>",
+            "icon_url": "<<INPUT.icon_url>>",
+            "link_names": "=INPUT.link_names",
+            "thread_ts": "\"<<INPUT.thread_timestamp>>\"",
+            "username": "<<INPUT.username>>",
+            "metadata": "=INPUT.metadata",
+            "mrkdwn": "=INPUT.markdown",
+            "reply_broadcast": "=INPUT.send_reply_to_channel",
+            "unfurl_links": "=INPUT.unfurl_links",
+            "unfurl_media": "=INPUT.unfurl_media",
+            "parse": "<<INPUT.parse>>"
+          },
+          "final_payload": "=REJECT(\n  LOCAL.all_options,\n  LAMBDA(\n    item,\n    OR(\n      item = NULL,\n      IF(\n        OR(\n          TYPE(item) = \"TrueClass\",\n          TYPE(item) = \"FalseClass\",\n          TYPE(item) = \"Integer\"\n        ),\n        IS_EMPTY(TEXT(item)),\n        IS_EMPTY(item)\n      )\n    )\n  )\n)"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "52e0649e3d147759de03210df9686e0b4a86587edd0fde896e11fae52acf1f7e",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::LLMAgent",
+      "name": "Analyze Alerts",
+      "disabled": false,
+      "description": null,
+      "guid": "64eb3402ca5dcf89acdf158c00298f6b",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:3bc1918fa393bb2bcb31a6ecee307bcf",
+      "options": {
+        "prompt": "### Role ###\nYou are a cybersecurity analyst tasked with interpreting alerts from an intrusion detection system.\n\n### Task ###\nYour task is to analyze the following Suricata alert (provided in JSON format) and create a detailed summary for the Security Operations (SecOps) team. Use the following mapping to categorize the severity: {1: \"Critical\", 2: \"High\", 3: \"Medium\", 4: \"Low\", 5: \"Informational\"}. Format the output as JSON-compatible Slack blocks that can be directly used with the Slack API. ONLY include the JSON output.\n\nThe summary should include:\n\n1. **Signature and Severity Overview**: Use the alert's `alert.signature` as the section header, formatted as `*Alert Signature (Severity: High)*`, followed by a brief summary of what triggered the alert and what it signifies.\n2. **Impact**: Outline the potential impact on network systems or assets.\n3. **Recommended Actions**: Specify immediate investigation or mitigation steps in bullet points.\n\nUse the following structure for each section:\n\n- **Section Block with a Header**: Each section should have a header (bold text) followed by a brief explanation or list.\n- **Bullet Points**: Where applicable, especially in “Recommended Actions”\n \n### Requirements ###\n- Format the response for clarity, using simple language to ensure accessibility for all team members.\n- Use JSON formatting compatible with Slack block elements, with each section as a separate Slack block for easy reading and comprehension.\n- ONLY include the JSON output in your response.\n\n**Example JSON Structure**:\n```json\n[\n    {\n        \"type\": \"section\",\n        \"text\": {\n            \"type\": \"mrkdwn\",\n            \"text\": \":rotating_light: *Alert Signature (Severity: High)* :rotating light:\"\n        }\n    },\n    {\n        \"type\": \"section\",\n        \"text\": {\n            \"type\": \"mrkdwn\",\n            \"text\": \"*Impact*\\nDiscuss the potential impact on systems here.\"\n        }\n    },\n    {\n        \"type\": \"section\",\n        \"text\": {\n            \"type\": \"mrkdwn\",\n            \"text\": \"*Recommended Actions*\\n• Action item 1\\n• Action item 2\"\n        }\n    }\n]\n\n\n```\n\n### Alert Data ###\n<<receive_suricata_alerts.body>>\r\n\r\n### Output ###\r\nGenerate a JSON array formatted as shown in the example, replacing placeholder text with a detailed and actionable summary of the alert. Ensure compatibility with Slack’s block kit structure.\r\n",
+        "emit_failure_event": true
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Send Slack DM",
+      "disabled": false,
+      "description": "Sends a message to a public channel, private channel, or direct message/IM channel that has rich, interactive elements that you can design in Slack's Block Kit Builder. \n\nLink to documentation: https://api.slack.com/methods/chat.postMessage\nLink to Block Kit Builder Overview: https://api.slack.com/block-kit\nLink to Block Kit Builder: https://api.slack.com/tools/block-kit-builder \n\nRequired scope: chat:write",
+      "guid": "e69365fefeeda3dbc68d7b4ab121d657",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:9f14dfcd7d12904a7c5651dbe89b3389",
+      "options": {
+        "url": "https://slack.com/api/chat.postMessage",
+        "content_type": "json; charset=utf-8",
+        "method": "post",
+        "payload": "=LOCAL.final_payload",
+        "headers": {
+          "Authorization": "Bearer <<INPUT.slack_credential>>"
+        },
+        "local": {
+          "all_options": {
+            "channel": "<<INPUT.channel_user_id>>",
+            "blocks": "=DEFAULT(INPUT.message.blocks, INPUT.message)",
+            "icon_emoji": "<<INPUT.icon_emoji>>",
+            "icon_url": "<<INPUT.icon_url>>",
+            "link_names": "=INPUT.link_names",
+            "thread_ts": "\"<<INPUT.thread_timestamp>>\"",
+            "username": "<<INPUT.username>>",
+            "metadata": "=INPUT.metadata",
+            "mrkdwn": "=INPUT.markdown",
+            "reply_broadcast": "=INPUT.send_reply_to_channel",
+            "unfurl_links": "=INPUT.unfurl_links",
+            "unfurl_media": "=INPUT.unfurl_media",
+            "parse": "<<INPUT.parse>>"
+          },
+          "final_payload": "=REJECT(\n  LOCAL.all_options,\n  LAMBDA(\n    item,\n    OR(\n      item = NULL,\n      IF(\n        OR(\n          TYPE(item) = \"TrueClass\",\n          TYPE(item) = \"FalseClass\",\n          TYPE(item) = \"Integer\"\n        ),\n        IS_EMPTY(TEXT(item)),\n        IS_EMPTY(item)\n      )\n    )\n  )\n)"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "52e0649e3d147759de03210df9686e0b4a86587edd0fde896e11fae52acf1f7e",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Post Alert to Thread",
+      "disabled": false,
+      "description": null,
+      "guid": "06ef4426a6cb1093e216d9db62965903",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:3bc1918fa393bb2bcb31a6ecee307bcf",
+      "options": {
+        "url": "https://slack.com/api/chat.postMessage",
+        "content_type": "application_json",
+        "method": "post",
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.slack_net_monitor>>"
+        },
+        "payload": {
+          "text": "```<<receive_suricata_alerts.body |> NEAT_JSON(%)>>```",
+          "channel": "<<send_slack_dm.body.channel>>",
+          "thread_ts": "=send_slack_dm.body.ts"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::WebhookAgent",
+      "name": "Receive Weekly Digest",
+      "disabled": false,
+      "description": null,
+      "guid": "7cd3e6eeaa510c7a402738e1c5be6faf",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:3bc1918fa393bb2bcb31a6ecee307bcf",
+      "options": {
+        "path": "2550268692def285f7fa460be9154136",
+        "secret": "c8eaf05dcf200efccbadb6d29fe641eb",
+        "verbs": "get,post",
+        "response_code": "200"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Parse Digest",
+      "disabled": false,
+      "description": null,
+      "guid": "e071a35bf9d92a873652708f127ef8d3",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:3bc1918fa393bb2bcb31a6ecee307bcf",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "message": "=receive_weekly_digest.body"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Send Slack DM",
+      "disabled": false,
+      "description": "Sends a message to a public channel, private channel, or direct message/IM channel that has rich, interactive elements that you can design in Slack's Block Kit Builder. \n\nLink to documentation: https://api.slack.com/methods/chat.postMessage\nLink to Block Kit Builder Overview: https://api.slack.com/block-kit\nLink to Block Kit Builder: https://api.slack.com/tools/block-kit-builder \n\nRequired scope: chat:write",
+      "guid": "1208bce42510b2e312983910c9f4dafd",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:9f14dfcd7d12904a7c5651dbe89b3389",
+      "options": {
+        "url": "https://slack.com/api/chat.postMessage",
+        "content_type": "json; charset=utf-8",
+        "method": "post",
+        "payload": "=LOCAL.final_payload",
+        "headers": {
+          "Authorization": "Bearer <<INPUT.slack_credential>>"
+        },
+        "local": {
+          "all_options": {
+            "channel": "<<INPUT.channel_user_id>>",
+            "blocks": "=DEFAULT(INPUT.message.blocks, INPUT.message)",
+            "icon_emoji": "<<INPUT.icon_emoji>>",
+            "icon_url": "<<INPUT.icon_url>>",
+            "link_names": "=INPUT.link_names",
+            "thread_ts": "\"<<INPUT.thread_timestamp>>\"",
+            "username": "<<INPUT.username>>",
+            "metadata": "=INPUT.metadata",
+            "mrkdwn": "=INPUT.markdown",
+            "reply_broadcast": "=INPUT.send_reply_to_channel",
+            "unfurl_links": "=INPUT.unfurl_links",
+            "unfurl_media": "=INPUT.unfurl_media",
+            "parse": "<<INPUT.parse>>"
+          },
+          "final_payload": "=REJECT(\n  LOCAL.all_options,\n  LAMBDA(\n    item,\n    OR(\n      item = NULL,\n      IF(\n        OR(\n          TYPE(item) = \"TrueClass\",\n          TYPE(item) = \"FalseClass\",\n          TYPE(item) = \"Integer\"\n        ),\n        IS_EMPTY(TEXT(item)),\n        IS_EMPTY(item)\n      )\n    )\n  )\n)"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "52e0649e3d147759de03210df9686e0b4a86587edd0fde896e11fae52acf1f7e",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Send Slack DM",
+      "disabled": false,
+      "description": "Sends a message to a public channel, private channel, or direct message/IM channel that has rich, interactive elements that you can design in Slack's Block Kit Builder. \n\nLink to documentation: https://api.slack.com/methods/chat.postMessage\nLink to Block Kit Builder Overview: https://api.slack.com/block-kit\nLink to Block Kit Builder: https://api.slack.com/tools/block-kit-builder \n\nRequired scope: chat:write",
+      "guid": "e424fd1c43a350db67ec7a71434a0f74",
+      "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:9f14dfcd7d12904a7c5651dbe89b3389",
+      "options": {
+        "url": "https://slack.com/api/chat.postMessage",
+        "content_type": "json; charset=utf-8",
+        "method": "post",
+        "payload": "=LOCAL.final_payload",
+        "headers": {
+          "Authorization": "Bearer <<INPUT.slack_credential>>"
+        },
+        "local": {
+          "all_options": {
+            "channel": "<<INPUT.channel_user_id>>",
+            "blocks": "=DEFAULT(INPUT.message.blocks, INPUT.message)",
+            "icon_emoji": "<<INPUT.icon_emoji>>",
+            "icon_url": "<<INPUT.icon_url>>",
+            "link_names": "=INPUT.link_names",
+            "thread_ts": "\"<<INPUT.thread_timestamp>>\"",
+            "username": "<<INPUT.username>>",
+            "metadata": "=INPUT.metadata",
+            "mrkdwn": "=INPUT.markdown",
+            "reply_broadcast": "=INPUT.send_reply_to_channel",
+            "unfurl_links": "=INPUT.unfurl_links",
+            "unfurl_media": "=INPUT.unfurl_media",
+            "parse": "<<INPUT.parse>>"
+          },
+          "final_payload": "=REJECT(\n  LOCAL.all_options,\n  LAMBDA(\n    item,\n    OR(\n      item = NULL,\n      IF(\n        OR(\n          TYPE(item) = \"TrueClass\",\n          TYPE(item) = \"FalseClass\",\n          TYPE(item) = \"Integer\"\n        ),\n        IS_EMPTY(TEXT(item)),\n        IS_EMPTY(item)\n      )\n    )\n  )\n)"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "52e0649e3d147759de03210df9686e0b4a86587edd0fde896e11fae52acf1f7e",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    }
+  ],
+  "diagram_notes": [
+    {
+      "content": "# Suricata Alert Relay",
+      "position": [
+        315,
+        165
+      ],
+      "guid": "a075bd9d733486fd4299178be3c9effa",
+      "width": 180
+    },
+    {
+      "content": "# Weekly Digest Relay",
+      "position": [
+        810,
+        165
+      ],
+      "guid": "34b6313c1fa23dc28b4e04945cee4910",
+      "width": 180
+    },
+    {
+      "content": "# Example Suricata Alert\n\n```\n{\n    \"timestamp\": \"2024-11-14T12:11:07.800443+0000\",\n    \"flow_id\": 1694977133128175,\n    \"in_iface\": \"enp1s0\",\n    \"event_type\": \"alert\",\n    \"src_ip\": \"34.95.113.255\",\n    \"src_port\": 443,\n    \"dest_ip\": \"192.168.0.51\",\n    \"dest_port\": 40754,\n    \"proto\": \"TCP\",\n    \"pkt_src\": \"wire/pcap\",\n    \"alert\": {\n        \"action\": \"allowed\",\n        \"gid\": 1,\n        \"signature_id\": 2210044,\n        \"rev\": 2,\n        \"signature\": \"SURICATA STREAM Packet with invalid timestamp\",\n        \"category\": \"Generic Protocol Command Decode\",\n        \"severity\": 3\n    },\n    \"direction\": \"to_client\",\n    \"flow\": {\n        \"pkts_toserver\": 12,\n        \"pkts_toclient\": 1,\n        \"bytes_toserver\": 3138,\n        \"bytes_toclient\": 66,\n        \"start\": \"2024-11-14T12:11:02.394642+0000\",\n        \"src_ip\": \"192.168.0.51\",\n        \"dest_ip\": \"34.95.113.255\",\n        \"src_port\": 40754,\n        \"dest_port\": 443\n    }\n}\n```",
+      "position": [
+        -285,
+        180
+      ],
+      "guid": "b5b23f5850ee316cb2d44523e1cc15af",
+      "width": 270
+    }
+  ],
+  "links": [
+    {
+      "source": 0,
+      "receiver": 1
+    },
+    {
+      "source": 0,
+      "receiver": 3
+    },
+    {
+      "source": 1,
+      "receiver": 2
+    },
+    {
+      "source": 1,
+      "receiver": 9,
+      "link_type": "failure"
+    },
+    {
+      "source": 2,
+      "receiver": 5
+    },
+    {
+      "source": 3,
+      "receiver": 4
+    },
+    {
+      "source": 3,
+      "receiver": 9,
+      "link_type": "failure"
+    },
+    {
+      "source": 4,
+      "receiver": 5
+    },
+    {
+      "source": 6,
+      "receiver": 7
+    },
+    {
+      "source": 7,
+      "receiver": 8
+    },
+    {
+      "source": 9,
+      "receiver": 5
+    }
+  ],
+  "diagram_layout": "{\"90f9636217c517687e6b3ec39c4e3550\":[315,225],\"cde8851a3537e10c7195b0ccf0dd68ae\":[90,300],\"9c1dcb23ec5c6585e2d6ea412915d9fb\":[90,435],\"64eb3402ca5dcf89acdf158c00298f6b\":[600,300],\"e69365fefeeda3dbc68d7b4ab121d657\":[600,435],\"06ef4426a6cb1093e216d9db62965903\":[315,510],\"7cd3e6eeaa510c7a402738e1c5be6faf\":[810,225],\"e071a35bf9d92a873652708f127ef8d3\":[810,345],\"1208bce42510b2e312983910c9f4dafd\":[810,465],\"e424fd1c43a350db67ec7a71434a0f74\":[315,375]}",
+  "send_to_story_enabled": false,
+  "entry_agent_guid": null,
+  "exit_agent_guids": [],
+  "exit_agent_guid": null,
+  "api_entry_action_guids": [],
+  "api_exit_action_guids": [],
+  "keep_events_for": 604800,
+  "reporting_status": true,
+  "send_to_story_access": null,
+  "story_library_metadata": {},
+  "parent_only_send_to_story": false,
+  "monitor_failures": false,
+  "send_to_stories": [],
+  "synchronous_webhooks_enabled": false,
+  "send_to_story_access_source": 0,
+  "send_to_story_skill_use_requires_confirmation": true,
+  "pages": [],
+  "tags": [],
+  "time_saved_unit": "minutes",
+  "time_saved_value": 0,
+  "origin_story_identifier": "cloud:98bf19cf1391e1805daf0cbdc3239e4a:3bc1918fa393bb2bcb31a6ecee307bcf",
+  "integration_product": null,
+  "integration_vendor": null,
+  "llm_product_instructions": "",
+  "exported_at": "2024-11-15T19:20:04Z",
+  "icon": ":alert:",
+  "integrations": [
+    {
+      "action_inputs": [
+        {
+          "name": "Channel / User ID",
+          "description": "You can use a channel name (like ‘#general’) or an ID (like ‘C1234567890’). For non-public channels, specify the ID; this includes private channels, multi-person direct message channels (use the group ID), or DMs to a specific user (use the user ID).",
+          "required": true,
+          "type": "TEXT",
+          "ranking": 0,
+          "value": "\"<<RESOURCE.suricata_alert_channel>>\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Slack Credential",
+          "description": "",
+          "required": false,
+          "type": "CREDENTIAL",
+          "ranking": 1073741824,
+          "value": "\"=CREDENTIAL.slack_net_monitor\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Icon URL",
+          "description": "URL to an image to use as the icon for this message.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 1610612736,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Link names?",
+          "description": "Find and link user groups. No longer supports linking individual users; use syntax shown in [Mentioning Users](https://api.slack.com/reference/surfaces/formatting#mentioning-users) instead.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 1879048192,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Metadata",
+          "description": "JSON object with event_type and event_payload fields, presented as a URL-encoded string. Metadata you post to Slack is accessible to any app or user who is a member of that workspace. ex: {\"event_type\": \"task_created\", \"event_payload\": { \"id\": \"11223\", \"title\": \"Redesign Homepage\"}}",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2013265920,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Markdown",
+          "description": "Select 'no' to disable Slack markup parsing. Enabled by default.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2080374784,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Parse",
+          "description": "Change how messages are treated. See [further details](https://api.slack.com/methods/chat.postMessage#formatting).",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2113929216,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Send reply to channel?",
+          "description": "Used in conjunction with input 'Thread timestamp' and indicates whether reply should be made visible to everyone in the channel or conversation. Defaults to false.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2130706432,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Thread timestamp",
+          "description": "Provide another message's ts value to make this message a reply. Avoid using a reply's ts value; use its parent instead.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2139095040,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Unfurl media?",
+          "description": "Select 'no' to disable unfurling of media content.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2143289344,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Message",
+          "description": "Use [Slack's Block Kit Builder](https://app.slack.com/block-kit-builder) to build your message. Then, click the 'Copy Payload' button on the top right of the block kit builder and paste it into the ‘Plain code’ tab here when you’re done. ",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2145386496,
+          "value": "{\"blocks\":[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"Weekly Suricata Digest (<<receive_weekly_digest.body.time_period.start |>\\nDATE(%, \\\"%Y-%m-%d\\\")>> - <<receive_weekly_digest.body.time_period.end |>\\nDATE(%, \\\"%Y-%m-%d\\\")>>)\",\"emoji\":true}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Total Alerts:*\\n133,454\"},{\"type\":\"mrkdwn\",\"text\":\"*Unique Signatures:*\\n14\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Top Alert Signatures:*\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"• SURICATA STREAM ESTABLISHED packet out of window - 112,174\"},{\"type\":\"mrkdwn\",\"text\":\"• SURICATA STREAM Packet with invalid ack - 9,234\"},{\"type\":\"mrkdwn\",\"text\":\"• SURICATA STREAM ESTABLISHED invalid ack - 9,232\"}]},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Severity Breakdown:*\"},{\"type\":\"mrkdwn\",\"text\":\"*Category Overview:*\"}]},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"• High: 0\\n• Medium: 133,442\\n• Low: 12\"},{\"type\":\"mrkdwn\",\"text\":\"• Generic Protocol Command Decode: 130,808\\n• Not Suspicious Traffic: 204\\n• Generic ICMP event: 162\\n• Web Application Attack: 8\\n• Network Trojan detected: 4\"}]}]}",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Unfurl links?",
+          "description": "Select 'yes' to enable unfurling of primarily text-based content.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2146435072,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Icon emoji",
+          "description": "Emoji to use as the icon for this message (i.e. :chart_with_upwards_trend:). Overrides Icon URL input.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2146959360,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Username",
+          "description": "Specify your bot's username that will send the message.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2147221504,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        }
+      ],
+      "action_guid": "1208bce42510b2e312983910c9f4dafd",
+      "product": "Slack"
+    },
+    {
+      "action_inputs": [
+        {
+          "name": "OpenAI credential",
+          "description": "",
+          "required": true,
+          "type": "CREDENTIAL",
+          "ranking": 0,
+          "value": "\"=CREDENTIAL.openai\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Model",
+          "description": "ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.",
+          "required": true,
+          "type": "TEXT",
+          "ranking": 1073741824,
+          "value": "\"gpt-4o-mini\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Messages",
+          "description": "A list of messages comprising the conversation so far. [Example Python code](https://cookbook.openai.com/examples/how_to_format_inputs_to_chatgpt_models).",
+          "required": true,
+          "type": "OBJECT",
+          "ranking": 1610612736,
+          "value": "[{\"role\":\"system\",\"content\":\"You are a cybersecurity analyst tasked with interpreting alerts from an intrusion detection system.\\r\"},{\"role\":\"user\",\"content\":\"Your task is to analyze the following Suricata alert (provided in JSON format) and create a detailed summary for the Security Operations (SecOps) team. Format the output as JSON-compatible Slack blocks that can be directly used with the Slack API.\\r\\n\\r\\nThe summary should include:\\r\\n\\r\\n1. **Alert Overview**: A brief explanation of what triggered the alert and what it signifies.\\r\\n2. **Severity Level**\\r\\n3. **Impact**: Potential impact on network systems or assets.\\r\\n4. **Recommended Actions**: Immediate investigation or mitigation steps.\\r\\n\\nUse the following structure for each section:\\r\\n\\r\\n- **Section Block with a Header**: Each section should have a header (bold text) followed by a brief explanation or list.\\r\\n- **Bullet Points**: Where applicable, especially in “Recommended Actions” and “Additional Context.”\\r\\n  \\r\\n### Requirements ###\\r\\n- Format the response for clarity, using simple language to ensure accessibility for all team members.\\r\\n- Use JSON formatting compatible with Slack block elements, with each section as a separate Slack block for easy reading and comprehension.\\r\\n\\r\\n**Example JSON Structure**:\\r\\n```json\\r\\n[\\r\\n    {\\r\\n        \\\"type\\\": \\\"section\\\",\\r\\n        \\\"text\\\": {\\r\\n            \\\"type\\\": \\\"mrkdwn\\\",\\r\\n            \\\"text\\\": \\\"*Alert Overview*\\\\nProvide a brief overview of the alert here.\\\"\\r\\n        }\\r\\n    },\\r\\n    {\\r\\n        \\\"type\\\": \\\"section\\\",\\r\\n        \\\"text\\\": {\\r\\n            \\\"type\\\": \\\"mrkdwn\\\",\\r\\n            \\\"text\\\": \\\"*Severity Level*\\\\nSeverity: High\\\"\\r\\n        }\\r\\n    },\\r\\n    {\\r\\n        \\\"type\\\": \\\"section\\\",\\r\\n        \\\"text\\\": {\\r\\n            \\\"type\\\": \\\"mrkdwn\\\",\\r\\n            \\\"text\\\": \\\"*Impact*\\\\nDiscuss the potential impact on systems here.\\\"\\r\\n        }\\r\\n    },\\r\\n    {\\r\\n        \\\"type\\\": \\\"section\\\",\\r\\n        \\\"text\\\": {\\r\\n            \\\"type\\\": \\\"mrkdwn\\\",\\r\\n            \\\"text\\\": \\\"*Recommended Actions*\\\\n• Action item 1\\\\n• Action item 2\\\"\\r\\n        }\\r\\n    },\\r\\n    {\\r\\n        \\\"type\\\": \\\"section\\\",\\r\\n        \\\"text\\\": {\\r\\n            \\\"type\\\": \\\"mrkdwn\\\",\\r\\n            \\\"text\\\": \\\"*Additional Context*\\\\n• Related alerts: ...\\\\n• Recent incidents: ...\\\"\\r\\n        }\\r\\n    }\\r\\n]\\r\\n```\\r\\n\\r\\n### Alert Data ###\\r\\n<<receive_suricata_alerts.body>>\\r\\n\\r\\n### Output ###\\r\\nGenerate a JSON array formatted as shown in the example, replacing placeholder text with a detailed and actionable summary of the alert. Ensure compatibility with Slack’s block kit structure.\\r\\n\"}]",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{\"type\":\"array\",\"items\":{\"oneOf\":[{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\",\"enum\":[\"system\"],\"description\":\"The role of the message author, in this case system.\"},\"content\":{\"oneOf\":[{\"type\":\"string\"},{\"type\":\"array\"}],\"description\":\"The contents of the system message.\"},\"name\":{\"type\":\"string\",\"description\":\"An optional name for the participant.\"}},\"required\":[\"role\",\"content\"],\"additionalProperties\":false},{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\",\"enum\":[\"user\"],\"description\":\"The role of the message author, in this case user.\"},\"content\":{\"oneOf\":[{\"type\":\"string\"},{\"type\":\"array\"}],\"description\":\"The contents of the user message.\"},\"name\":{\"type\":\"string\",\"description\":\"An optional name for the participant.\"}},\"required\":[\"role\",\"content\"],\"additionalProperties\":false},{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\",\"enum\":[\"assistant\"],\"description\":\"The role of the message author, in this case assistant.\"},\"content\":{\"oneOf\":[{\"type\":\"string\"},{\"type\":\"array\"},{\"type\":\"null\"}],\"description\":\"The contents of the assistant message.\"},\"refusal\":{\"oneOf\":[{\"type\":\"string\"},{\"type\":\"null\"}],\"description\":\"The refusal message by the assistant.\"},\"name\":{\"type\":\"string\",\"description\":\"An optional name for the participant.\"},\"tool_calls\":{\"type\":\"array\",\"description\":\"The tool calls generated by the model, such as function calls.\"}},\"required\":[\"role\"],\"additionalProperties\":false},{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\",\"enum\":[\"tool\"],\"description\":\"The role of the message author, in this case tool.\"},\"content\":{\"oneOf\":[{\"type\":\"string\"},{\"type\":\"array\"}],\"description\":\"The contents of the tool message.\"},\"tool_call_id\":{\"type\":\"string\",\"description\":\"Tool call that this message is responding to.\"}},\"required\":[\"role\",\"content\",\"tool_call_id\"],\"additionalProperties\":false}]}}"
+        },
+        {
+          "name": "Logit bias",
+          "description": "Modify the likelihood of specified tokens appearing in the completion.\n\nAccepts a JSON object that maps tokens (specified by their token ID in the tokenizer) to an associated bias value from -100 to 100. Mathematically, the bias is added to the logits generated by the model prior to sampling. The exact effect will vary per model, but values between -1 and 1 should decrease or increase likelihood of selection; values like -100 or 100 should result in a ban or exclusive selection of the relevant token.\n",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 1879048192,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Logprobs",
+          "description": "Whether to return log probabilities of the output tokens or not. If true, returns the log probabilities of each output token returned in the `content` of `message`.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2013265920,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Top logprobs",
+          "description": "An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability. `logprobs` must be set to `true` if this parameter is used.",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 2080374784,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "N",
+          "description": "How many chat completion choices to generate for each input message. Note that you will be charged based on the number of generated tokens across all of the choices. Keep `n` as `1` to minimize costs.",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 2113929216,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Seed",
+          "description": "This feature is in Beta.\nIf specified, our system will make a best effort to sample deterministically, such that repeated requests with the same `seed` and parameters should return the same result.\nDeterminism is not guaranteed, and you should refer to the `system_fingerprint` response parameter to monitor changes in the backend.\n",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 2130706432,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Stop",
+          "description": "Up to 4 sequences where the API will stop generating further tokens.\n",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2139095040,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Temperature",
+          "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 2143289344,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Top p",
+          "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 2145386496,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Tools",
+          "description": "A list of tools the model may call. Currently, only functions are supported as a tool. Use this to provide a list of functions the model may generate JSON inputs for. A max of 128 functions are supported.\n",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2146435072,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Service tier",
+          "description": "Specifies the latency tier to use for processing the request. This parameter is relevant for customers subscribed to the scale tier service:\n  - If set to 'auto', and the Project is Scale tier enabled, the system will utilize scale tier credits until they are exhausted. \n  - If set to 'auto', and the Project is not Scale tier enabled, the request will be processed using the default service tier with a lower uptime SLA and no latency guarentee.\n  - If set to 'default', the request will be processed using the default service tier with a lower uptime SLA and no latency guarentee.\n  - When not set, the default behavior is 'auto'.\n\n  When this parameter is set, the response body will include the `service_tier` utilized.\n",
+          "required": false,
+          "type": "OPTION",
+          "ranking": 2146959360,
+          "value": "\"\"",
+          "options": [
+            "auto",
+            "default"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Tool choice",
+          "description": "Controls which (if any) tool is called by the model. none means the model will not call any tool and instead generates a message. auto means the model can pick between generating a message or calling one or more tools. required means the model must call one or more tools. Specifying a particular tool via {\"type\": \"function\", \"function\": {\"name\": \"my_function\"}} forces the model to call that tool.",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2147221504,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Stream options",
+          "description": "Options for streaming response. Only set this when you set stream: true.",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2147352576,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Parallel tool calls",
+          "description": "Whether to enable parallel function calling during tool use.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2147418112,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Frequency penalty",
+          "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.\n\n[See more information about frequency and presence penalties.](https://platform.openai.com/docs/guides/text-generation)\n",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 2147450880,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Max completion tokens",
+          "description": "An upper bound for the number of tokens that can be generated for a completion, including visible output tokens and [reasoning tokens](https://platform.openai.com/docs/guides/reasoning).\n",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 2147467264,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Presence penalty",
+          "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.\n\n[See more information about frequency and presence penalties.](https://platform.openai.com/docs/guides/text-generation)\n",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 2147475456,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Stream",
+          "description": "If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message. [Example Python code](https://cookbook.openai.com/examples/how_to_stream_completions).\n",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2147479552,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "User",
+          "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids).\n",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2147481600,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Response format",
+          "description": "An object specifying the format that the model must output. Compatible with [GPT-4o](https://platform.openai.com/docs/models#gpt-4o), [GPT-4o mini](https://platform.openai.com/docs/models#gpt-4o-mini), [GPT-4 Turbo](https://platform.openai.com/docs/models#gpt-4-and-gpt-4-turbo) and all GPT-3.5 Turbo models newer than `gpt-3.5-turbo-1106`.\n\nSetting to `{ \"type\": \"json_schema\", \"json_schema\": {...} }` enables Structured Outputs which ensures the model will match your supplied JSON schema. Learn more in the [Structured Outputs guide](https://platform.openai.com/docs/guides/structured-outputs).\n\nSetting to `{ \"type\": \"json_object\" }` enables JSON mode, which ensures the message the model generates is valid JSON.\n\n**Important:** when using JSON mode, you **must** also instruct the model to produce JSON yourself via a system or user message. Without this, the model may generate an unending stream of whitespace until the generation reaches the token limit, resulting in a long-running and seemingly \"stuck\" request. Also note that the message content may be partially cut off if `finish_reason=\"length\"`, which indicates the generation exceeded `max_tokens` or the conversation exceeded the max context length.\n",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2147482624,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        }
+      ],
+      "action_guid": "cde8851a3537e10c7195b0ccf0dd68ae",
+      "product": "OpenAI"
+    },
+    {
+      "action_inputs": [
+        {
+          "name": "Channel / User ID",
+          "description": "You can use a channel name (like ‘#general’) or an ID (like ‘C1234567890’). For non-public channels, specify the ID; this includes private channels, multi-person direct message channels (use the group ID), or DMs to a specific user (use the user ID).",
+          "required": true,
+          "type": "TEXT",
+          "ranking": 0,
+          "value": "\"<<RESOURCE.suricata_alert_channel>>\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Slack Credential",
+          "description": "",
+          "required": false,
+          "type": "CREDENTIAL",
+          "ranking": 1073741824,
+          "value": "\"=CREDENTIAL.slack_net_monitor\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Icon URL",
+          "description": "URL to an image to use as the icon for this message.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 1879048192,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Link names?",
+          "description": "Find and link user groups. No longer supports linking individual users; use syntax shown in [Mentioning Users](https://api.slack.com/reference/surfaces/formatting#mentioning-users) instead.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2013265920,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Metadata",
+          "description": "JSON object with event_type and event_payload fields, presented as a URL-encoded string. Metadata you post to Slack is accessible to any app or user who is a member of that workspace. ex: {\"event_type\": \"task_created\", \"event_payload\": { \"id\": \"11223\", \"title\": \"Redesign Homepage\"}}",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2080374784,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Markdown",
+          "description": "Select 'no' to disable Slack markup parsing. Enabled by default.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2113929216,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Parse",
+          "description": "Change how messages are treated. See [further details](https://api.slack.com/methods/chat.postMessage#formatting).",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2130706432,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Send reply to channel?",
+          "description": "Used in conjunction with input 'Thread timestamp' and indicates whether reply should be made visible to everyone in the channel or conversation. Defaults to false.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2139095040,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Thread timestamp",
+          "description": "Provide another message's ts value to make this message a reply. Avoid using a reply's ts value; use its parent instead.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2143289344,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Unfurl media?",
+          "description": "Select 'no' to disable unfurling of media content.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2145386496,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Message",
+          "description": "Use [Slack's Block Kit Builder](https://app.slack.com/block-kit-builder) to build your message. Then, click the 'Copy Payload' button on the top right of the block kit builder and paste it into the ‘Plain code’ tab here when you’re done. ",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2146959360,
+          "value": "{\"blocks\":\"=analyze_alerts.body.choices[0].message.content |>\\nSPLIT(%, \\\"```json\\\")[-1] |>\\nSPLIT(%, \\\"```\\\")[0] |>\\nSTRIP(%) |>\\nJSON_PARSE(%)\"}",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Unfurl links?",
+          "description": "Select 'yes' to enable unfurling of primarily text-based content.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2147221504,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Icon emoji",
+          "description": "Emoji to use as the icon for this message (i.e. :chart_with_upwards_trend:). Overrides Icon URL input.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2147450880,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Username",
+          "description": "Specify your bot's username that will send the message.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2147467264,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        }
+      ],
+      "action_guid": "9c1dcb23ec5c6585e2d6ea412915d9fb",
+      "product": "Slack"
+    },
+    {
+      "action_inputs": [
+        {
+          "name": "Channel / User ID",
+          "description": "You can use a channel name (like ‘#general’) or an ID (like ‘C1234567890’). For non-public channels, specify the ID; this includes private channels, multi-person direct message channels (use the group ID), or DMs to a specific user (use the user ID).",
+          "required": true,
+          "type": "TEXT",
+          "ranking": 0,
+          "value": "\"<<RESOURCE.suricata_alert_channel>>\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Slack Credential",
+          "description": "",
+          "required": false,
+          "type": "CREDENTIAL",
+          "ranking": 1073741824,
+          "value": "\"=CREDENTIAL.slack_net_monitor\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Icon URL",
+          "description": "URL to an image to use as the icon for this message.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 1610612736,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Link names?",
+          "description": "Find and link user groups. No longer supports linking individual users; use syntax shown in [Mentioning Users](https://api.slack.com/reference/surfaces/formatting#mentioning-users) instead.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 1879048192,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Metadata",
+          "description": "JSON object with event_type and event_payload fields, presented as a URL-encoded string. Metadata you post to Slack is accessible to any app or user who is a member of that workspace. ex: {\"event_type\": \"task_created\", \"event_payload\": { \"id\": \"11223\", \"title\": \"Redesign Homepage\"}}",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2013265920,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Markdown",
+          "description": "Select 'no' to disable Slack markup parsing. Enabled by default.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2080374784,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Parse",
+          "description": "Change how messages are treated. See [further details](https://api.slack.com/methods/chat.postMessage#formatting).",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2113929216,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Send reply to channel?",
+          "description": "Used in conjunction with input 'Thread timestamp' and indicates whether reply should be made visible to everyone in the channel or conversation. Defaults to false.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2130706432,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Thread timestamp",
+          "description": "Provide another message's ts value to make this message a reply. Avoid using a reply's ts value; use its parent instead.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2139095040,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Unfurl media?",
+          "description": "Select 'no' to disable unfurling of media content.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2143289344,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Message",
+          "description": "Use [Slack's Block Kit Builder](https://app.slack.com/block-kit-builder) to build your message. Then, click the 'Copy Payload' button on the top right of the block kit builder and paste it into the ‘Plain code’ tab here when you’re done. ",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2145386496,
+          "value": "{\"blocks\":\"=analyze_alerts.output\"}",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Unfurl links?",
+          "description": "Select 'yes' to enable unfurling of primarily text-based content.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2146435072,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Icon emoji",
+          "description": "Emoji to use as the icon for this message (i.e. :chart_with_upwards_trend:). Overrides Icon URL input.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2146959360,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Username",
+          "description": "Specify your bot's username that will send the message.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2147221504,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        }
+      ],
+      "action_guid": "e69365fefeeda3dbc68d7b4ab121d657",
+      "product": "Slack"
+    },
+    {
+      "action_inputs": [
+        {
+          "name": "Channel / User ID",
+          "description": "You can use a channel name (like ‘#general’) or an ID (like ‘C1234567890’). For non-public channels, specify the ID; this includes private channels, multi-person direct message channels (use the group ID), or DMs to a specific user (use the user ID).",
+          "required": true,
+          "type": "TEXT",
+          "ranking": 0,
+          "value": "\"<<RESOURCE.suricata_alert_channel>>\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Slack Credential",
+          "description": "",
+          "required": false,
+          "type": "CREDENTIAL",
+          "ranking": 1073741824,
+          "value": "\"=CREDENTIAL.slack_net_monitor\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Icon URL",
+          "description": "URL to an image to use as the icon for this message.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 1610612736,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Link names?",
+          "description": "Find and link user groups. No longer supports linking individual users; use syntax shown in [Mentioning Users](https://api.slack.com/reference/surfaces/formatting#mentioning-users) instead.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 1879048192,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Metadata",
+          "description": "JSON object with event_type and event_payload fields, presented as a URL-encoded string. Metadata you post to Slack is accessible to any app or user who is a member of that workspace. ex: {\"event_type\": \"task_created\", \"event_payload\": { \"id\": \"11223\", \"title\": \"Redesign Homepage\"}}",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2013265920,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Markdown",
+          "description": "Select 'no' to disable Slack markup parsing. Enabled by default.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2080374784,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Parse",
+          "description": "Change how messages are treated. See [further details](https://api.slack.com/methods/chat.postMessage#formatting).",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2113929216,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Send reply to channel?",
+          "description": "Used in conjunction with input 'Thread timestamp' and indicates whether reply should be made visible to everyone in the channel or conversation. Defaults to false.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2130706432,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Thread timestamp",
+          "description": "Provide another message's ts value to make this message a reply. Avoid using a reply's ts value; use its parent instead.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2139095040,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Unfurl media?",
+          "description": "Select 'no' to disable unfurling of media content.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2143289344,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Message",
+          "description": "Use [Slack's Block Kit Builder](https://app.slack.com/block-kit-builder) to build your message. Then, click the 'Copy Payload' button on the top right of the block kit builder and paste it into the ‘Plain code’ tab here when you’re done. ",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2145386496,
+          "value": "{\"blocks\":[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"Suricata Alert: <<receive_suricata_alerts.body.alert.signature>>\",\"emoji\":true}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Timestamp:*\\n<<receive_suricata_alerts.body.timestamp>>\"},{\"type\":\"mrkdwn\",\"text\":\"*Category:*\\n<<receive_suricata_alerts.body.alert.category >>\"},{\"type\":\"mrkdwn\",\"text\":\"*Severity:*\\n<<receive_suricata_alerts.body.alert.severity >>\"},{\"type\":\"mrkdwn\",\"text\":\"*Action:*\\n<<receive_suricata_alerts.body.alert.action >>\"}]},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Source IP:*\\n<<receive_suricata_alerts.body.src_ip >>\"},{\"type\":\"mrkdwn\",\"text\":\"*Source Port:*\\n<<receive_suricata_alerts.body.src_port >>\"},{\"type\":\"mrkdwn\",\"text\":\"*Destination IP:*\\n<<receive_suricata_alerts.body.dest_ip >>\"},{\"type\":\"mrkdwn\",\"text\":\"*Destination Port:*\\n<<receive_suricata_alerts.body.dest_port >>\"}]}]}",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Unfurl links?",
+          "description": "Select 'yes' to enable unfurling of primarily text-based content.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2146435072,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Icon emoji",
+          "description": "Emoji to use as the icon for this message (i.e. :chart_with_upwards_trend:). Overrides Icon URL input.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2146959360,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        },
+        {
+          "name": "Username",
+          "description": "Specify your bot's username that will send the message.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2147221504,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "{}"
+        }
+      ],
+      "action_guid": "e424fd1c43a350db67ec7a71434a0f74",
+      "product": "Slack"
+    }
+  ]
+}
