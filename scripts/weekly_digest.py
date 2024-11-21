@@ -70,8 +70,8 @@ def generate_digest():
 
     digest = {
         "time_period": {
-            "start": (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "end": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            "start": (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "end": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         },
         "alert_summary": generate_summary(weekly_alerts),
         "severity_breakdown": severity_breakdown(weekly_alerts),
