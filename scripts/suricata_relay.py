@@ -10,6 +10,7 @@ TINES_WEBHOOK_URL = 'https://your-tines-tenant.tines.com/path/secret'
 MAX_SEEN_ALERTS = 10000  # Maximum number of unique alerts to track in memory
 seen_alerts = OrderedDict()
 
+
 def get_alert_hash(alert: dict) -> str:
     """Generate a unique hash for the alert.
 
@@ -23,6 +24,7 @@ def get_alert_hash(alert: dict) -> str:
                 f"{alert.get('dest_ip')}-{alert.get('dest_port')}-{alert.get('alert', {}).get('signature_id')}"
     return hashlib.md5(unique_id.encode('utf-8')).hexdigest()
 
+
 def relay_alert(alert: dict):
     """Relay the alert to Tines.
 
@@ -35,7 +37,8 @@ def relay_alert(alert: dict):
                                  timeout=5)
         response.raise_for_status()
     except requests.exceptions.RequestException:
-        pass 
+        pass
+
 
 def add_to_seen(alert_hash: str):
     """Add the alert hash to the seen_alerts dictionary.
@@ -47,6 +50,7 @@ def add_to_seen(alert_hash: str):
 
     if len(seen_alerts) > MAX_SEEN_ALERTS:
         seen_alerts.popitem(last=False)  # Remove the oldest item
+
 
 def follow(file: object):
     """Follow a file and yield new lines as they are written.
@@ -82,6 +86,7 @@ def main():
             except json.JSONDecodeError:
                 # Skip lines that aren't valid JSON
                 continue
+
 
 if __name__ == "__main__":
     main()
