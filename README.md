@@ -1,5 +1,8 @@
 # SOHO IDS Relay
 
+![SonarCloud Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=tyler-tee_SOHO-IDS-RELAY&metric=alert_status)
+
+
 A small office/home office (SOHO) Intrusion Detection System (IDS) project that leverages Suricata to detect potential network threats and uses an LLM to process and analyze alerts via webhook integration.
 
 ## Purpose
